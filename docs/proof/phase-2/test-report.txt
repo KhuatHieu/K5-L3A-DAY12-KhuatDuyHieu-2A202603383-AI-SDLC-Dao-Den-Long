@@ -1,0 +1,47 @@
+✔ contract v1.1 file has standard numbers (2.079446ms)
+✔ tick 0 snapshot, night_start, cadence, end line, new snapshot fields (56.722406ms)
+✔ night 1 standard map: lanterns, 20 random motes on spawn points, no shades at tick 0 (50.887256ms)
+✔ shade schedule night 1: 2 at tick 300 (spawning), +1 every 480, ids S1.., ≥15 m from player, max 6 (103.637843ms)
+✔ random mote respawn at ticks 240, 480 on a free point (86.447506ms)
+✔ movement: 6 m/s, camera yaw rotation, normalization (167.374672ms)
+✔ input at tick k affects state k+1; sparse frames persist (54.075306ms)
+✔ jump: 7 m/s, gravity 20, only when grounded, apex ≈ 1.225 m (61.698614ms)
+✔ pickup: XZ ≤ 1.0 and height diff ≤ 1.5; capacity 10 (106.021514ms)
+✔ deposit: radius 2.0, min(carried, missing), +10 per mote deposited, lantern remembers progress (173.07294ms)
+✔ deposit picks nearest unlit lantern, tie → smaller id (119.483006ms)
+✔ win all_lit with bonus; win even on the timeout tick; no_flames beats all_lit (152.097849ms)
+✔ dawn: time runs out → lost dawn (50.825457ms)
+✔ shade detect 12 m → chase at 4 m/s; beyond detect stays wander (60.619385ms)
+✔ shade lose-chase at 18 m (65.558292ms)
+✔ shade hit: −1 flame, drops floor(n/2) motes on 1.5–2.5 m ring (ttl 8 s), invuln 90, recoil 2 m / 60 ticks, 1 hit per tick (76.951968ms)
+✔ dropped motes expire after 480 ticks (62.6472ms)
+✔ safe zone: lit lantern blocks shades at 6 m; shade inside when lit is pushed out ≤ 30 ticks without damage (116.970236ms)
+✔ pulse: costs 3, stuns within 3D 5 m of foot+0.8, 120 ticks, push 4 m over 15 ticks, +5 each, cooldown 3 s (69.883417ms)
+✔ pulse needs 3 motes; re-pulse refreshes stun on stunned shade and scores again (101.468873ms)
+✔ dash: 14 m/s for 12 ticks (2.8 m) along move dir, cooldown 1.5 s from start, facing dir when idle (108.426016ms)
+✔ dash in the air keeps height (55.693304ms)
+✔ fall off island: once, −1 flame, lose all carried, wait 60 ticks, respawn at start with invuln (63.87953ms)
+✔ fall with last flame loses immediately (57.296687ms)
+✔ pause: tick advances, sim_tick/time/cooldowns frozen, state paused, resume continues (54.472469ms)
+✔ drifter: idle → chase (carried ≥ 5, ≤ 15 m) → steal min(3) → flee 240 ticks → removed (119.52607ms)
+✔ drifter steal ignores invulnerability; safe zone does not block it (53.61016ms)
+✔ pulse vs drifter: chase → flee without steal; flee with loot → drifter_drop as dropped motes (105.521844ms)
+✔ drifters spawn on nights 2/3 at tick 1200 (D1), not on night 1 (133.570408ms)
+✔ charm: pickup event, 600 ticks, speed 7.2, dash without cooldown, respawn after 2700 ticks (119.521382ms)
+✔ charm default positions per night (152.877871ms)
+✔ night 2: 6 lanterns, bridge walkable, jump pad flies to island B (156.686495ms)
+✔ night 3: ramp to tier 1, cliff wall blocks, pad to tier 2, tower blocks (219.766711ms)
+✔ night 3 wind: gust at sim tick 1800 for 300 ticks, 2 m/s; wind_enabled false disables (174.177593ms)
+✔ night 3 shades are 4.5 m/s (58.667432ms)
+✔ determinism: nights 1–3 byte-identical for same seed+inputs (621.732661ms)
+✔ performance: full night (21600 ticks) headless ≤ 30 s (533.519923ms)
+✔ coordinates rounded to 3 decimals (58.433675ms)
+✔ exit codes: malformed → 2; bad args / night 4 → nonzero (411.642451ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5102.100947

@@ -21,3 +21,26 @@
 | A17 | `shades[].pos` y | Giữ nguyên y từ scenario; Bóng Mực tự sinh có y = 1.0 (tâm). Khoảng cách luôn đo trên XZ |
 | A18 | Scenario `lit: true` | Không đổi `deposited`, không cộng điểm, không phát sự kiện |
 | A19 | `--night` khác 1 | Thoát mã 1 (chỉ có Đêm 1 ở Phase 1) |
+
+# Giả định — Phase 2 (Ticket-02)
+
+Ticket-02 **thay** số liệu và một số luật Phase 1. Những giả định cũ bị thay: A1–A3 (số), A5 (đom đóm rơi giờ rơi xuống đất, sống 480 tick), A8–A10 (lịch sinh, bản đồ, rơi khỏi đảo đã bật), A15 (điểm: +10 tính khi **nạp**, không phải khi nhặt; +5 mỗi Bóng trúng Tỏa Sáng).
+
+| # | Chỗ mơ hồ | Giả định |
+|---|---|---|
+| B1 | "Tăng tốc/dừng ≤ 0.1 s" | Tức thời (0 s ≤ 0.1 s) — đơn giản, tất định, khớp test di chuyển Phase 1 |
+| B2 | Thời gian ở trạng thái `spawning` | 60 tick (1 s): không di chuyển, không gây sát thương |
+| B3 | `wander` | Trôi 1 m/s theo hướng ngẫu nhiên (seed), đổi hướng mỗi 120 tick, không ra khỏi đảo |
+| B4 | Chênh cao khi nạp đèn | Như nhặt: \|y Mây − y chân đèn\| ≤ 1.5 m (đèn Đêm 3 ở các tầng khác nhau) |
+| B5 | "Chênh cao" khi bị chạm | \|y chân Mây − y tâm Bóng\| ≤ 1.5 (tâm Bóng tự sinh = mặt đất + 1 m) |
+| B6 | `night_start` | Ghi 1 lần ngay sau snapshot tick 0, `tick: 0` (setup không phát sự kiện gameplay) |
+| B7 | Đêm 3 điểm xuất phát | Tâm (0,0,0) là tháp chuông trên tầng 2 → chọn **(0,0,−30)** tầng 0, quay mặt +Z |
+| B8 | `invuln` trong snapshot | Boolean (đang bất tử hay không); số tick còn lại có thể đặt qua scenario `invuln_ticks` |
+| B9 | Bóng bị đẩy khi đèn vừa thắp | Trạng thái `recoil` trong lúc bị đẩy (tối đa 30 tick), không gây sát thương |
+| B10 | Gió Lạc idle | Lượn vòng chậm 2 m/s; điểm sương = điểm sinh Bóng Mực của Đêm đó |
+| B11 | Bóng Mực bay trên biển mây | Được (là sinh vật sương); chỉ lúc `wander` mới không ra khỏi đảo |
+| B12 | Gió | Cơn gió ở sim tick 1800, 3600…, dài 300 tick; hướng bốc ngẫu nhiên (seed) lúc bắt đầu báo trước (120 tick trước), `dir_deg` giữ giá trị cơn gần nhất; `null` khi chưa có |
+| B13 | Thứ tự trong 1 tick | Đúng như ticket; bộ đếm giảm ở bước 2, nên trạng thái kéo dài N tick hiển thị ở N snapshot liên tiếp |
+| B14 | Tạm dừng ở bản chơi | Không gọi `step()` khi menu tạm dừng mở (logic dừng hẳn); headless dùng input `pause` theo contract |
+| B15 | Vách tầng | Không bước lên được nếu mặt đất mới cao hơn chân > 0.35 m; dốc (0.5 m/m) đi lên được |
+| B16 | Gió Lạc đã bị Tỏa Sáng khi đang chase | Coi như đã dùng lượt cướp (không quay lại cướp nữa) |

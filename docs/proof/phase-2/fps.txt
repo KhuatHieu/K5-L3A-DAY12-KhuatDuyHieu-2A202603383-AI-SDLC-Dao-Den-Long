@@ -1,0 +1,6 @@
+# FPS benchmark (scripts/fps.mjs), 1280x720, vsync off, 2026-11-20T09:49:27Z
+# CPU: Intel(R) Core(TM) Ultra 7 155H
+{"night":1,"seconds":15,"avg_fps":1298.2,"min_fps":1106.6,"renderer":"ANGLE (Intel, Mesa Intel(R) Arc(tm) Graphics (MTL), OpenGL ES 3.2)","size":"1280x720"}
+{"night":2,"seconds":15,"avg_fps":1369.6,"min_fps":1189.4,"renderer":"ANGLE (Intel, Mesa Intel(R) Arc(tm) Graphics (MTL), OpenGL ES 3.2)","size":"1280x720"}
+{"night":3,"seconds":15,"avg_fps":1104.5,"min_fps":1036.8,"renderer":"ANGLE (Intel, Mesa Intel(R) Arc(tm) Graphics (MTL), OpenGL ES 3.2)","size":"1280x720"}
+# software rendering (SwiftShader, no GPU) earlier run, reference only: night1 11.7, night2 11.1, night3 10.2 avg FPS

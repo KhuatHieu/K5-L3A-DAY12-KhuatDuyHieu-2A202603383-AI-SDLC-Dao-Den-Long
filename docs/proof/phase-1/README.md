@@ -23,3 +23,5 @@ Tạo lại toàn bộ: `npm test` và `bash scripts/proof.sh` (ở tag `phase-1
 | Hiệu năng headless | 18000 tick tối đa | headless-summary.txt (~60 ms) | Đạt |
 
 Hạn chế đã biết: Mây chưa có hoạt ảnh đi; Bóng Mực đi thẳng (không né vật cản — đảo không có vật cản trong logic).
+
+> **Ghi chú (sau Phase 1, phát hiện khi làm Phase 2):** `.gitignore` lúc đó có dòng `out/` nên thư mục `out/` **không có trong tag `phase-1`**. Chạy lại `bash scripts/proof.sh` ở tag `phase-1` sẽ tạo lại các file này. Từ Phase 2 trở đi chỉ ignore `/out/` ở gốc repo, và output Phase 1 (chạy ở code Phase 1) được commit bổ sung trên `main`.

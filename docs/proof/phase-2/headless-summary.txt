@@ -1,0 +1,17 @@
+# Phase 2 headless evidence (2026-11-20T09:51:15Z, node v24.15.0)
+n1_win (night 1): exit=0 56ms | {"type":"end","ticks":71,"state":"won","score":586} | events:  1 deposit, 1 game_over, 1 lantern_lit, 10 mote_picked, 1 night_start,
+n2_pad_drifter (night 2): exit=0 62ms | {"type":"end","ticks":600,"state":"playing","score":0} | events:  1 drifter_steal, 1 night_start,
+n3_ramp_wind (night 3): exit=0 91ms | {"type":"end","ticks":2400,"state":"playing","score":0} | events:  1 night_start,
+pause_charm (night 1): exit=0 59ms | {"type":"end","ticks":200,"state":"playing","score":0} | events:  1 charm_picked, 2 dash, 1 mote_picked, 1 night_start, 1 paused, 1 resumed,
+full_n1_a (night 1): exit=0 523ms | {"type":"end","ticks":14888,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 3 player_hit, 6 shade_spawned,
+full_n1_b (night 1): exit=0 544ms | {"type":"end","ticks":14888,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 3 player_hit, 6 shade_spawned,
+determinism night 1 (seed 42): IDENTICAL
+full_n2_a (night 2): exit=0 1018ms | {"type":"end","ticks":19800,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 8 shade_spawned,
+full_n2_b (night 2): exit=0 997ms | {"type":"end","ticks":19800,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 8 shade_spawned,
+determinism night 2 (seed 42): IDENTICAL
+full_n3_a (night 3): exit=0 141ms | {"type":"end","ticks":2175,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 3 player_hit, 7 shade_spawned,
+full_n3_b (night 3): exit=0 152ms | {"type":"end","ticks":2175,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 3 player_hit, 7 shade_spawned,
+determinism night 3 (seed 42): IDENTICAL
+malformed inputs -> exit 2
+malformed scenario -> exit 2
+--night 4 -> exit 1
