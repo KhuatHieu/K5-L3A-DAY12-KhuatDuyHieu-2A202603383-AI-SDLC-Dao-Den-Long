@@ -9,4 +9,4 @@ description: Run the full verification for the current phase (contract tests, he
    Helpers: `?night=N` jump into night N, `&lit=k` pre-light k lanterns, `&t=sec` set time left, `&yaw=deg` camera.
 4. FPS (needs real GPU): `PORT=5179 node scripts/fps.mjs <night> 15` for nights 1–3 → append to `docs/proof/phase-N/fps.txt`. SwiftShader numbers are NOT representative.
 5. Update `docs/proof/phase-N/README.md`: requirement → how verified → evidence → result. Write "chưa đạt" honestly.
-6. Kill leftovers safely: `pkill -f '[u]ser-data-dir=/tmp/ddl-fps'` (bracket trick so pkill doesn't match your own shell).
+6. Kill leftovers by PID (`node server.js & SP=$!; …; kill $SP`). Do NOT use `pkill -f`: it matches the agent's own shell whenever the command text contains the pattern (exit 144, twice).

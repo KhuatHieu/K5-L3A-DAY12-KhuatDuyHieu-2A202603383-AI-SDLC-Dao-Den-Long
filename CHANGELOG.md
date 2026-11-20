@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0 / phase-4] — contract v1.3 (Ticket-04 "Bình minh")
+### Added
+- `bench_cmd` (`node scripts/bench.mjs`): cảnh benchmark chuẩn (200 Bóng Mực, 100 đom đóm, camera bay vòng), cửa sổ Chrome 1280×720, vsync tắt → `bench.json`.
+- `soak_cmd` (`node --expose-gc --jitless src/soak.js`): 10 Đêm trong một tiến trình, input ngẫu nhiên theo seed → `soak.json`.
+- Bảng xếp hạng cục bộ (top 10, lưu `data/leaderboard.json`), màn hình từ menu, nhập tên sau Bình Minh hoặc khi thua (chấp nhận tên tiếng Việt có dấu), `node server.js --export-leaderboard out.json`.
+- Accessibility: đổi phím (phát hiện trùng, khôi phục mặc định), phụ đề và mũi tên mép màn hình, giảm chuyển động, chữ lớn ×1.25, chữ UI ≥ 18 px.
+- Release v1.0.0: gói web tĩnh chạy bằng `node server.js`, không cần `npm install`.
+### Changed
+- `run_cmd` đổi từ `npm start` thành `node server.js`, để `--export-leaderboard` được chuyển thẳng vào chương trình (npm sẽ nuốt cờ này). `npm start` vẫn dùng được.
+- Phím tạm dừng mặc định là P; Esc luôn tạm dừng.
+
+
 ## [phase-3] — contract v1.2 (Ticket-03 "Đèn cạn dầu")
 ### ⚠ Breaking changes
 - `game_over.reason`: **bỏ `all_lit`**, thêm `dawn_survived`. Thắp hết đèn **không** còn kết thúc Đêm; thắng chỉ được xét ở bình minh (cần ≥ ceil(0.6 × số đèn) đèn đang sáng).

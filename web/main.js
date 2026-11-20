@@ -16,8 +16,12 @@ const P = {
 };
 
 // ---------- settings (persisted; storage may be unavailable)
-const settings = { vol: 0.6, sens: 0.3, cb: false }; // cb = colour-blind friendly palette (Ticket-03 §6)
-try { Object.assign(settings, JSON.parse(localStorage.getItem('ddl-settings') || '{}')); } catch {}
+const DEFAULT_KEYS = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', jump: 'Space', dash: 'ShiftLeft', interact: 'KeyE', pulse: 'KeyQ', pause: 'KeyP' };
+const KEY_LABEL = { up: 'Đi lên', down: 'Đi xuống', left: 'Sang trái', right: 'Sang phải', jump: 'Nhảy', dash: 'Lướt', interact: 'Tương tác', pulse: 'Tỏa Sáng', pause: 'Tạm dừng' };
+const RESERVED = { Escape: 'Tạm dừng (cố định)', ArrowLeft: 'Xoay camera', ArrowRight: 'Xoay camera', Enter: 'Xác nhận' };
+// cb = colour-blind palette (Ticket-03 §6); rm = reduce motion; big = large text ×1.25; subs = captions/visual cues (Ticket-04 §4)
+const settings = { vol: 0.6, sens: 0.3, cb: false, rm: false, big: false, subs: true, keys: { ...DEFAULT_KEYS } };
+try { const st = JSON.parse(localStorage.getItem('ddl-settings') || '{}'); Object.assign(settings, st, { keys: { ...DEFAULT_KEYS, ...(st.keys || {}) } }); } catch {}
 const saveSettings = () => { try { localStorage.setItem('ddl-settings', JSON.stringify(settings)); } catch {} };
 const rimColor = () => (settings.cb ? 0x00B3FF : P.shadeRim);
 const applyCb = () => { document.body.classList.toggle('cb', settings.cb); for (const v of views.shades.values()) { v.rim.material.color.setHex(rimColor()); v.eyeM.color.setHex(rimColor()); } };
@@ -236,9 +240,13 @@ const sfxLose = () => beep(220, 1.0, 'sine', 0.15, 0.4);
 // ---------- input
 const keys = new Set();
 let camYaw = 0, dragging = false, lastX = 0;
+const keyName = (c) => ({ Space: 'Space', ShiftLeft: 'Shift trái', ShiftRight: 'Shift phải', ControlLeft: 'Ctrl trái', Escape: 'Esc' }[c] || c.replace(/^Key|^Digit/, ''));
+let rebinding = null;
 addEventListener('keydown', (e) => {
   ensureAudio();
-  if (e.code === 'Escape' || e.code === 'KeyP') { if (mode === 'play') pause(); else if (mode === 'pause') resume(); return; }
+  if (rebinding) { e.preventDefault(); assignKey(rebinding, e.code); return; }
+  if (document.activeElement?.tagName === 'INPUT' && document.activeElement.type === 'text') return;
+  if (e.code === 'Escape' || e.code === settings.keys.pause) { if (mode === 'play') pause(); else if (mode === 'pause') resume(); return; }
   if (e.code === 'Enter') { if (mode === 'intro') beginPlay(); else if (mode === 'menu') startNight(1); }
   keys.add(e.code);
 });
@@ -249,9 +257,10 @@ addEventListener('pointerup', () => (dragging = false));
 addEventListener('pointermove', (e) => { if (dragging) { camYaw -= (e.clientX - lastX) * settings.sens; lastX = e.clientX; } });
 function readFrame() {
   const k = (c) => keys.has(c);
-  const z = (k('KeyW') || k('ArrowUp') ? 1 : 0) - (k('KeyS') || k('ArrowDown') ? 1 : 0);
-  const x = (k('KeyA') ? 1 : 0) - (k('KeyD') ? 1 : 0); // screen-right is −x at yaw 0
-  return { move: [x, z], cam_yaw_deg: camYaw, jump: k('Space'), interact: k('KeyE'), pulse: k('KeyQ'), dash: k('ShiftLeft') || k('ShiftRight') };
+  const K = settings.keys;
+  const z = (k(K.up) ? 1 : 0) - (k(K.down) ? 1 : 0);
+  const x = (k(K.left) ? 1 : 0) - (k(K.right) ? 1 : 0); // screen-right is −x at yaw 0
+  return { move: [x, z], cam_yaw_deg: camYaw, jump: k(K.jump), interact: k(K.interact), pulse: k(K.pulse), dash: k(K.dash) };
 }
 
 // ---------- flow: menu → intro → play → result → next night
@@ -260,11 +269,12 @@ const INTRO = {
   2: 'Ông Đăng: "Đảo Cau có hai nửa, nối bằng cây cầu tre cũ. Cẩn thận Gió Lạc — chúng thích ánh sáng người khác mang."',
   3: 'Ông Đăng: "Đảo Chuông cao ba tầng. Khi gió nổi, bám chặt vào. Đèn trên đỉnh sẽ đánh thức chuông bình minh."',
 };
-let g = null, mode = 'menu', night = 1, prevMode = 'menu', seed = Date.now() & 0x7fffffff, acc = 0;
+let g = null, mode = 'menu', night = 1, prevMode = 'menu', seed = Date.now() & 0x7fffffff, acc = 0, runSeed = seed;
 const wonScores = {};
-const screens = ['sMenu', 'sIntro', 'sResult', 'sPause', 'sSettings'];
+const screens = ['sMenu', 'sIntro', 'sResult', 'sPause', 'sSettings', 'sBoard', 'sKeys'];
 function show(id) { for (const s of screens) $(s).classList.toggle('show', s === id); const b = id && $(id).querySelector('button'); if (b) b.focus(); }
 function startNight(n) {
+  for (const t of edgeTracks.values()) t.el.remove(); edgeTracks.clear(); $('captions').innerHTML = ''; cueState.low.clear();
   night = n; g = createGame({ seed: seed++, night: n });
   buildLevel(n); clearViews();
   views.lanterns = g.lanterns.map(lanternView);
@@ -276,6 +286,44 @@ function startNight(n) {
 function beginPlay() { mode = 'play'; acc = 0; show(null); }
 function pause() { mode = 'pause'; show('sPause'); } // logic stops completely: step() is not called while paused
 function resume() { mode = 'play'; acc = 0; show(null); }
+const runTotal = () => Object.values(wonScores).reduce((a, b) => a + b, 0);
+function saveForm() {
+  return `<form id="saveForm" style="display:flex;gap:8px;justify-content:center"><input type="text" id="pname" maxlength="12" placeholder="Tên (3–12 ký tự)" aria-label="Tên người chơi">
+    <button type="submit">Lưu điểm ${runTotal()}</button></form><p id="saveMsg"></p>`;
+}
+document.addEventListener('submit', async (e) => {
+  if (e.target.id !== 'saveForm') return;
+  e.preventDefault();
+  const name = $('pname').value;
+  try {
+    const r = await fetch('/api/leaderboard', { method: 'POST', body: JSON.stringify({ name, score: runTotal(), nights_won: Object.keys(wonScores).length, seed: runSeed }) });
+    const j = await r.json();
+    if (!r.ok) { $('saveMsg').textContent = j.error || 'Không lưu được'; return; }
+    $('saveMsg').textContent = j.rank ? `Đã lưu! Hạng ${j.rank}.` : 'Đã lưu (ngoài top 10).';
+    e.target.remove();
+  } catch { $('saveMsg').textContent = 'Không kết nối được máy chủ cục bộ'; }
+});
+async function showBoard() {
+  let entries = [];
+  try { entries = (await (await fetch('/api/leaderboard')).json()).entries; } catch {}
+  $('lbTable').innerHTML = '<tr><th>#</th><th>Tên</th><th>Điểm</th><th>Đêm thắng</th><th>Thời điểm</th></tr>' +
+    (entries.length ? entries.map((x, i) => `<tr><td>${i + 1}</td><td>${x.name.replace(/[<&>]/g, '')}</td><td>${x.score}</td><td>${x.nights_won}</td><td>${x.achieved_at.slice(0, 16).replace('T', ' ')}</td></tr>`).join('') : '<tr><td colspan="5">Chưa có ai — hãy là người đầu tiên!</td></tr>');
+  prevMode = mode; show('sBoard');
+}
+function renderKeys(msg = '') {
+  $('keyGrid').innerHTML = Object.keys(DEFAULT_KEYS).map((a) => `<span>${KEY_LABEL[a]}</span><button data-bind="${a}" class="${rebinding === a ? 'wait' : ''}">${rebinding === a ? 'Nhấn phím…' : keyName(settings.keys[a])}</button>`).join('');
+  $('keymsg').textContent = msg;
+  const K = settings.keys;
+  $('helpkeys').textContent = `${keyName(K.up)}${keyName(K.left)}${keyName(K.down)}${keyName(K.right)} di chuyển · kéo chuột / ← → xoay camera · ${keyName(K.jump)} nhảy · ${keyName(K.dash)} lướt · ${keyName(K.interact)} nạp/châm đèn · ${keyName(K.pulse)} tỏa sáng · Esc/${keyName(K.pause)} tạm dừng`;
+  const short = (c) => keyName(c).replace(/ (trái|phải)$/, ''); $('cdDash').lastChild.textContent = short(K.dash); $('cdPulse').lastChild.textContent = short(K.pulse);
+}
+function assignKey(action, code) {
+  rebinding = null;
+  const other = Object.keys(settings.keys).find((a) => a !== action && settings.keys[a] === code);
+  if (RESERVED[code]) return renderKeys(`Phím ${keyName(code)} đã dành cho "${RESERVED[code]}". Chọn phím khác.`);
+  if (other) return renderKeys(`Trùng phím: ${keyName(code)} đang dùng cho "${KEY_LABEL[other]}". Chọn phím khác.`);
+  settings.keys[action] = code; saveSettings(); renderKeys(`Đã gán ${keyName(code)} cho "${KEY_LABEL[action]}".`);
+}
 function finish() {
   const won = g.state === 'won';
   mode = 'result';
@@ -285,7 +333,7 @@ function finish() {
   if (won && night === 3) {
     $('resTitle').textContent = 'Bình Minh';
     $('resBody').innerHTML = `Chuông trên Đảo Chuông đã ngân. Ba hòn đảo sáng trở lại.<br>Tổng điểm: <b>${total}</b>`;
-    $('resBtns').innerHTML = '<button data-act="menu">Về menu</button>';
+    $('resBtns').innerHTML = saveForm() + '<button data-act="menu">Về menu</button>';
   } else if (won) {
     $('resTitle').textContent = `${NIGHTS[night].name} đã sáng!`;
     $('resBody').innerHTML = `Đèn ${lit}/${g.lanterns.length} · Điểm đêm: <b>${g.score}</b> · Tổng: <b>${total}</b>`;
@@ -293,26 +341,55 @@ function finish() {
   } else {
     $('resTitle').textContent = 'Sương đen đã thắng…';
     $('resBody').innerHTML = `${g.player.flames <= 0 ? 'Mây đã hết Ngọn Lửa.' : `Bình minh tới nhưng chỉ ${lit} đèn còn sáng (cần ${winNeed(g)}).`} Đèn ${lit}/${g.lanterns.length} · Điểm: <b>${g.score}</b>`;
-    $('resBtns').innerHTML = '<button data-act="restart">Chơi lại Đêm</button><button data-act="menu">Về menu</button>';
+    $('resBtns').innerHTML = saveForm() + '<button data-act="restart">Chơi lại Đêm</button><button data-act="menu">Về menu</button>';
   }
   show('sResult');
 }
 document.addEventListener('click', (e) => {
+  const bind = e.target.closest('button')?.dataset.bind;
+  if (bind) { rebinding = bind; renderKeys(); return; }
   const act = e.target.closest('button')?.dataset.act; if (!act) return;
   ensureAudio();
-  if (act === 'start') { for (const k of Object.keys(wonScores)) delete wonScores[k]; startNight(1); }
+  if (act === 'start') { for (const k of Object.keys(wonScores)) delete wonScores[k]; runSeed = seed; startNight(1); }
+  else if (act === 'leaderboard') showBoard();
+  else if (act === 'keys') { prevMode = mode; renderKeys(); show('sKeys'); }
+  else if (act === 'keysreset') { settings.keys = { ...DEFAULT_KEYS }; saveSettings(); renderKeys('Đã khôi phục phím mặc định.'); }
   else if (act === 'play') beginPlay();
   else if (act === 'resume') resume();
   else if (act === 'restart') startNight(night);
   else if (act === 'next') startNight(night + 1);
   else if (act === 'menu') { mode = 'menu'; show('sMenu'); }
-  else if (act === 'settings') { prevMode = mode; $('vol').value = settings.vol; $('sens').value = settings.sens; $('cb').checked = settings.cb; show('sSettings'); }
+  else if (act === 'settings') { prevMode = mode; $('vol').value = settings.vol; $('sens').value = settings.sens; for (const k of ['cb', 'rm', 'big', 'subs']) $(k).checked = settings[k]; show('sSettings'); }
   else if (act === 'back') { show(prevMode === 'pause' ? 'sPause' : 'sMenu'); }
 });
 $('vol').addEventListener('input', (e) => { settings.vol = Number(e.target.value); if (master) master.gain.value = settings.vol; saveSettings(); });
 $('sens').addEventListener('input', (e) => { settings.sens = Number(e.target.value); saveSettings(); });
 $('cb').addEventListener('change', (e) => { settings.cb = e.target.checked; saveSettings(); applyCb(); });
+for (const k of ['rm', 'big', 'subs']) $(k).addEventListener('change', (e) => { settings[k] = e.target.checked; saveSettings(); applyA11y(); });
+function applyA11y() { document.documentElement.classList.toggle('big', settings.big); if (!settings.subs) $('captions').innerHTML = ''; }
 
+// ---------- captions & edge arrows (Ticket-04 §4)
+function caption(text, danger = false, ttl = 4000) {
+  if (!settings.subs) return;
+  const d = document.createElement('div'); d.textContent = text; if (danger) d.className = 'danger';
+  $('captions').appendChild(d); while ($('captions').children.length > 4) $('captions').firstChild.remove();
+  setTimeout(() => d.remove(), ttl);
+}
+const edgeTracks = new Map(); // shade id → { el, until }
+function trackShade(id) {
+  if (!settings.subs) return;
+  const el = document.createElement('div'); el.className = 'edge'; $('edges').appendChild(el);
+  edgeTracks.set(id, { el, until: performance.now() + 4000 });
+}
+function placeEdge(el, wx, wy, wz) { // show an arrow at the screen edge when the world point is off-screen
+  tmpV.set(wx, wy, wz).project(camera);
+  const behind = tmpV.z > 1; let x = tmpV.x, y = tmpV.y; if (behind) { x = -x; y = -y; }
+  if (!(behind || Math.abs(x) > 0.95 || Math.abs(y) > 0.95)) { el.style.display = 'none'; return; }
+  const ang = Math.atan2(x, y), k = 0.88 / Math.max(Math.abs(x), Math.abs(y), 1e-6);
+  Object.assign(el.style, { display: 'block', left: `${(x * k * 0.5 + 0.5) * innerWidth - 12}px`, top: `${(-y * k * 0.5 + 0.5) * innerHeight - 13}px`, transform: `rotate(${ang}rad)` });
+}
+const cueState = { wind: false, last10: false, low: new Set() };
+let shakeT = 0;
 // ---------- per-frame sync
 for (let i = 0; i < 20; i++) $('motebar').appendChild(document.createElement('i'));
 { const c = document.createElement('span'); c.id = 'motecount'; c.style.marginLeft = '8px'; $('motebar').appendChild(c); }
@@ -384,6 +461,7 @@ function sync(dt, now) {
   tmpV.set(p.pos[0] - Math.sin(th) * 9, p.pos[1] + 5.5, p.pos[2] - Math.cos(th) * 9);
   camera.position.lerp(tmpV, Math.min(1, dt * 8));
   camera.lookAt(p.pos[0], p.pos[1] + 1.4, p.pos[2]);
+  if (shakeT > 0 && !settings.rm) { shakeT -= dt; camera.position.x += (Math.random() - 0.5) * 0.3; camera.position.y += (Math.random() - 0.5) * 0.3; } // camera shake on hit
   }
 
   // HUD
@@ -391,6 +469,18 @@ function sync(dt, now) {
   $('flames').textContent = '🔥'.repeat(Math.max(0, p.flames)) + '·'.repeat(Math.max(0, T.flames - p.flames));
   $('timer').textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
   $('timer').classList.toggle('warn', tl <= 30);
+  if (mode === 'play') {
+    if (warn !== null && !cueState.wind) caption(`🍃 Gió sắp thổi (hướng ${g.wind.dir}°)`); cueState.wind = warn !== null;
+    if (tl <= 10 && !cueState.last10) caption('⏳ 10 giây cuối!', true); cueState.last10 = tl <= 10;
+    for (const L of g.lanterns) { const low = L.lit && L.fuel < T.low_fuel_threshold * 60;
+      if (low && !cueState.low.has(L.id)) { cueState.low.add(L.id); caption(`🏮 Đèn ${L.id} sắp hết dầu!`, true); }
+      if (!low) cueState.low.delete(L.id); }
+  }
+  for (const [id, t] of edgeTracks) {
+    const sh = g.shades.find((x) => x.id === id);
+    if (!sh || now > t.until) { t.el.remove(); edgeTracks.delete(id); continue; }
+    placeEdge(t.el, sh.pos[0], sh.pos[1], sh.pos[2]);
+  }
   if (mode === 'play' && tl <= 10 && sec !== lastSec && sec > 0) beep(1000, 0.08, 'square', 0.06);
   lastSec = sec;
   const need = winNeed(g), cap = capacityOf(p);
@@ -453,7 +543,10 @@ function frame(now) {
         SFX[e.name]?.();
         if (e.name === 'pulse') ringFx(g.player.pos, P.lampCore, T.pulse_radius);
         if (e.name === 'lantern_lit') { const L = g.lanterns.find((x) => x.id === e.data.lantern_id); ringFx(L.pos, P.lampOn, T.safe_radius, 0.8); }
-        if (e.name === 'player_hit') { $('flash').style.opacity = 0.45; flashT = 0.15; }
+        if (e.name === 'player_hit') { if (!settings.rm) { $('flash').style.opacity = 0.45; flashT = 0.15; shakeT = 0.3; } caption(e.data.by === 'fall' ? '💧 Rơi khỏi đảo! −1 Ngọn Lửa' : '💥 Bị Bóng Mực chạm! −1 Ngọn Lửa', true); }
+        if (e.name === 'shade_spawned') { caption('👁 Bóng Mực xuất hiện!', true); trackShade(e.data.id); }
+        if (e.name === 'lantern_out') caption(`🏮 Đèn ${e.data.lantern_id} đã tắt`, true);
+        if (e.name === 'drifter_steal') caption(`🎐 Gió Lạc cướp ${e.data.amount} đom đóm!`, true);
       }
     }
     if (g.state !== 'playing' && mode === 'play') finish();
@@ -490,7 +583,8 @@ function benchFrame(now) {
   }
 }
 buildLevel(1);
-applyCb();
+applyCb(); applyA11y(); renderKeys();
+if (qs.has('fps')) document.body.classList.add('showfps');
 if (qs.has('cb')) { settings.cb = true; applyCb(); }
 if (qs.has('bench')) {
   bench = { duration: Number(qs.get('duration') || 30), dts: [], first: 0, last: null };
@@ -504,4 +598,7 @@ if (qs.has('bench')) {
   if (k) { const L = g.lanterns[0]; g.player.pos = [L.pos[0], L.pos[1], L.pos[2] - 7]; }
   if (qs.has('t')) g.duration = Number(qs.get('t'));
   if (qs.has('yaw')) camYaw = Number(qs.get('yaw'));
-} else show('sMenu');
+} else if (qs.get('screen') === 'keys') { renderKeys(); show('sKeys'); }
+else if (qs.get('screen') === 'board') showBoard();
+else if (qs.get('screen') === 'settings') { for (const k of ['cb', 'rm', 'big', 'subs']) $(k).checked = settings[k]; $('vol').value = settings.vol; $('sens').value = settings.sens; show('sSettings'); }
+else show('sMenu');

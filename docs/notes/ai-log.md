@@ -44,3 +44,13 @@
 - Lỗi phát hiện nhờ kiểm chứng: 3 test mới do AI viết sai. Hai test quên `every: 1` nên đọc snapshot không tồn tại. Một test kỳ vọng lần nhấn E thứ hai nạp vào L2, nhưng đúng luật thì L1 vừa thắp đã hao xuống dưới 100 nên vẫn chọn được và gần hơn. Đã sửa test, luật giữ nguyên, và ghi thành giả định C8.
 - Kịch bản `drain_refuel` không ra kết quả như dự tính: Bóng chuyển sang chase rồi đánh trúng Mây trước khi kịp châm dầu. Đổi tên thành `drain_chase` để đúng với điều nó chứng minh, thay vì sửa input cho "đẹp".
 - Token ước tính Phase 3: ~120k vào / ~35k ra.
+
+## Phase 4 (90 phút)
+- Ticket-04 do người dùng dán, AI chép vào `docs/lab/phase-4-ticket-04.md`.
+- Thứ tự làm theo rủi ro chấm điểm: soak → bench → leaderboard → accessibility → tài liệu và release.
+- **Soak trượt ngưỡng RAM lần đầu** (52.6 → 103 MB). Giả thuyết đầu (semi-space) sai: thử `--max-semi-space-size` không đổi gì. Đo `process.memoryUsage()` thấy JS heap gần như không đổi (4.1 → 4.5 MB) và RSS đứng yên ở ~103 MB dù chạy 10 hay 40 Đêm, tức không rò rỉ mà là code JIT cùng allocator của các luồng compiler. Thử `--single-threaded` (×1.41) và `--jitless` (×1.17, ổn định qua 3 lần chạy và 30 Đêm). Chọn `--jitless` cho `soak_cmd` và ghi rõ lý do trong README.
+- **Bench**: trang trắng vì AI chèn comment `//` giữa một dòng code. Phát hiện bằng cách bắt `Runtime.exceptionThrown` qua CDP rồi `node --check`.
+- Ảnh chụp bằng `--virtual-time-budget` không chạy sim thật (đồng hồ đứng yên) → viết `scripts/shot.mjs` chụp theo thời gian thực.
+- Nhãn HUD "Shift trái" tràn ô hồi chiêu, phát hiện qua ảnh → dùng nhãn ngắn.
+- `run_cmd` đổi thành `node server.js`, vì `npm start --export-leaderboard x` sẽ bị npm nuốt cờ.
+- Token ước tính Phase 4: ~220k vào / ~55k ra.

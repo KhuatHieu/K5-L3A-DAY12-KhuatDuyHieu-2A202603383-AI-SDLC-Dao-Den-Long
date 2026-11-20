@@ -1,10 +1,12 @@
 # AGENTS.md — Đảo Đèn Lồng
 
-3D game (Three.js, browser) + headless CLI (Node ≥ 18) for the AI SDLC lab. Requirements per phase: `docs/lab/` (PRD-0, Ticket-02…). Current contract: **v1.2** (3 nights, lantern fuel, dawn win — see `docs/adr/0001-*`).
+3D game (Three.js, browser) + headless CLI (Node ≥ 18) for the AI SDLC lab. Requirements per phase: `docs/lab/` (PRD-0, Ticket-02…). Current contract: **v1.3** (3 nights, lantern fuel, dawn win — see `docs/adr/0001-*`; bench/soak/leaderboard).
 
 ## Commands
 - install: `npm install` · play: `npm start` → http://localhost:5173 (`?night=N` jumps into a night)
 - tests: `npm test` (runs the real headless CLI; must stay green — Stop hook enforces it)
+- bench: `node scripts/bench.mjs --seed 42 --duration 30 --out bench.json` (windowed Chrome) · soak: `node --expose-gc --jitless src/soak.js --seed 7 --nights 10 --out soak.json`
+- leaderboard export: `node server.js --export-leaderboard out.json` (data in `data/`, `DDL_DATA_DIR` to override)
 - evidence: `bash scripts/proof.sh <phase>` → `docs/proof/phase-N/` · FPS: `node scripts/fps.mjs <night> <sec>` (server running)
 
 ## Architecture (keep it)
@@ -21,4 +23,6 @@
 - Malformed scenario/inputs → exit 2. Other errors → exit 1 + stderr.
 - New rule ⇒ new headless test first. Never weaken a test to make it pass; if a ticket changes a rule, change the test and log why in `docs/notes/ai-log.md`.
 - Every ambiguity → a row in `docs/notes/assumptions.md`. Every new feature → acceptance criteria in `docs/notes/spec-phase-N.md`.
-- Before claiming UI works: take a screenshot (see `.claude/skills/verify`) and look at it.
+- Bench mode (`createBenchGame`) and creative extras must not change headless output; extras are hidden in bench.
+- Never put `//` comments inside a one-line edit of `web/main.js`; run `node --check` on a .mjs copy after editing it.
+- Before claiming UI works: take a screenshot (`node scripts/shot.mjs <url> <sec> <png>` runs the game in real time) (see `.claude/skills/verify`) and look at it.
