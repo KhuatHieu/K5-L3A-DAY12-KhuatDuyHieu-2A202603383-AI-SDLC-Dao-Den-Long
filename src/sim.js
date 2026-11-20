@@ -108,7 +108,7 @@ export class ScenarioError extends Error {}
 
 export function durationOf(night) { return T[NIGHTS[night].duration_key]; }
 
-export function createGame({ seed = 1, night = 1, scenario = null } = {}) {
+export function createGame({ seed = 1, night = 1, scenario = null, bench = false } = {}) {
   const N = NIGHTS[night];
   if (!N) throw new ScenarioError(`unknown night ${night}`);
   const g = {
@@ -127,7 +127,7 @@ export function createGame({ seed = 1, night = 1, scenario = null } = {}) {
     randomMotes: true, randomShades: true, randomDrifters: N.drifters,
     windEnabled: N.wind, wind: { active: 0, dir: null },
     input: { move: [0, 0], cam_yaw_deg: 0, jump: false, interact: false, pulse: false, dash: false, pause: false },
-    events: [],
+    events: [], bench, // bench: Ticket-04 benchmark scene (no spawns/damage/pickup/fuel decay/end; shades only wander)
   };
   // 20 random motes at 20 distinct spawn points
   const pts = N.motePoints.map((_, i) => i);
@@ -362,7 +362,7 @@ export function step(g, frame) {
   for (const d of g.drifters) if (d.state === 'flee' && d.left > 0) d.left--;
   if (g.wind.active > 0) g.wind.active--;
   // 2b. fuel: decay 1 unit/tick (= 1.0/s) + 5 units/tick per draining shade (= 5/s), then empty lanterns go out
-  for (const L of g.lanterns) if (L.lit) L.fuel -= Math.round(T.fuel_decay_per_s * FU / 60);
+  if (!g.bench) for (const L of g.lanterns) if (L.lit) L.fuel -= Math.round(T.fuel_decay_per_s * FU / 60);
   for (const s of g.shades) {
     if (shadeState(s) !== 'drain') continue;
     const L = g.lanterns.find((x) => x.id === s.targetId);
@@ -449,7 +449,7 @@ export function step(g, frame) {
   }
 
   // 4. pick up motes and charms
-  if (!p.fallen) {
+  if (!p.fallen && !g.bench) {
     for (let i = 0; i < g.motes.length && p.carried < capacityOf(p);) {
       const m = g.motes[i];
       if (within(dxz(m.pos, p.pos), T.pickup_radius) && Math.abs(p.pos[1] - m.pos[1]) <= STD.pickup_dy + EPS) {
@@ -554,7 +554,7 @@ export function step(g, frame) {
       const k = STD.recoil_m / STD.recoil_ticks; stepTo(s.recoilDir[0] * k, s.recoilDir[1] * k);
     } else {
       const d = dxz(s.pos, p.pos);
-      const sees = !p.fallen;
+      const sees = !p.fallen && !g.bench;
       if (s.mode === 'drain') {
         const L = g.lanterns.find((x) => x.id === s.targetId);
         if (sees && within(d, STD.drain_chase_dist)) { s.mode = 'chase'; s.drainTicks = 0; }
@@ -620,7 +620,7 @@ export function step(g, frame) {
   }
 
   // 9. contacts: drifters steal first, then shades hit (ascending id)
-  if (!p.fallen) {
+  if (!p.fallen && !g.bench) {
     for (const d of [...g.drifters].sort((a, b) => natCmp(a.id, b.id))) {
       if (d.state !== 'chase' || d.stoleOnce || p.carried <= 0) continue;
       if (!within(dxz(d.pos, p.pos), STD.drifter_hit)) continue;
@@ -683,7 +683,8 @@ export function step(g, frame) {
   // 11. win / lose (after every update of the tick): no flames → lost; at dawn: enough lit → won, else lost
   g.simTick++;
   let reason = null;
-  if (p.flames <= 0) { g.state = 'lost'; reason = 'no_flames'; }
+  if (g.bench) { /* bench: night never ends */ }
+  else if (p.flames <= 0) { g.state = 'lost'; reason = 'no_flames'; }
   else if (g.duration - g.simTick / 60 <= 1e-9) {
     const lit = g.lanterns.filter((L) => L.lit);
     if (lit.length >= winNeed(g)) {
@@ -724,3 +725,17 @@ export function snapshot(g) {
 }
 
 export function drainEvents(g) { const e = g.events; g.events = []; return e; }
+
+// Ticket-04 benchmark scene: Night 1, exactly 200 wandering shades + 100 motes spread uniformly over the island
+// (seeded), L1–L3 lit with fuel 100, Mây idle at (0,0,0). No spawns, damage, pickups, fuel decay or night end.
+export function createBenchGame(seed = 42) {
+  const rng = mulberry32(seed);
+  const pt = (rMax) => { const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * rMax; return [Math.cos(a) * r, 0, Math.sin(a) * r]; };
+  const shades = Array.from({ length: 200 }, () => { const q = pt(38); return { pos: [q[0], STD.shade_y, q[2]], state: 'wander' }; });
+  const motes = Array.from({ length: 100 }, () => pt(38));
+  return createGame({ seed, night: 1, bench: true, scenario: {
+    random_motes: false, random_shades: false, random_drifters: false, wind_enabled: false,
+    shades, motes, drifters: [], charms: [],
+    lanterns: [{ id: 'L1', lit: true, fuel: 100 }, { id: 'L2', lit: true, fuel: 100 }, { id: 'L3', lit: true, fuel: 100 }],
+  } });
+}

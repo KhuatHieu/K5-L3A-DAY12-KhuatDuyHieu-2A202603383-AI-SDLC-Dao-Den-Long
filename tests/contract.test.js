@@ -36,9 +36,10 @@ const names = (r) => r.events.map((e) => e.name);
 const near = (a, b, eps = 1e-3) => Math.abs(a - b) <= eps;
 
 // ---------------- core / regression of v1.0 rules with standard numbers
-// [Ticket-03] version 1.2, durations 240/270/300, new fuel keys, new score table
-test('contract v1.2 file has standard numbers', () => {
-  assert.equal(C.contract_version, '1.2');
+// [Ticket-03] durations 240/270/300, new fuel keys, new score table · [Ticket-04] version 1.3 + bench_cmd/soak_cmd
+test('contract v1.3 file has standard numbers and bench/soak commands', () => {
+  assert.equal(C.contract_version, '1.3');
+  for (const k of ['build_cmd', 'run_cmd', 'headless_cmd', 'bench_cmd', 'soak_cmd']) assert.equal(typeof C[k], 'string', k);
   const want = { player_speed: 6, carry_capacity: 10, lantern_cost: 10, pickup_radius: 1, interact_radius: 2, pulse_cost: 3, pulse_radius: 5,
     pulse_cooldown_s: 3, safe_radius: 6, shade_speed: 4, shade_hit_radius: 1, invuln_s: 1.5, hit_drop_ratio: 0.5, flames: 3,
     night1_duration_s: 240, night2_duration_s: 270, night3_duration_s: 300, fuel_max: 100, fuel_decay_per_s: 1, fuel_per_mote: 10, relight_cost: 5, win_ratio: 0.6, drain_per_s: 5, low_fuel_threshold: 30, capacity_max: 20, dash_speed: 14, dash_duration_s: 0.2, dash_cooldown_s: 1.5,

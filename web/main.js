@@ -1,6 +1,6 @@
 // Browser renderer + UI. All gameplay rules live in src/sim.js (fixed 60 Hz); this file draws, reads input, plays audio.
 import * as THREE from 'three';
-import { configure, createGame, step, drainEvents, timeLeft, windWarning, shadeState, capacityOf, winNeed, NIGHTS, STD, mulberry32 } from '../src/sim.js';
+import { configure, createGame, step, drainEvents, timeLeft, windWarning, shadeState, capacityOf, winNeed, NIGHTS, STD, mulberry32, createBenchGame } from '../src/sim.js';
 
 const contract = await (await fetch('/game.contract.json')).json();
 configure(contract.tuning);
@@ -378,11 +378,13 @@ function sync(dt, now) {
     l.rotation.set(now / 200 + i, now / 300, 0);
   });
 
-  // camera
+  // camera (bench mode drives its own orbit camera)
+  if (mode !== 'bench') {
   const th = (camYaw * Math.PI) / 180;
   tmpV.set(p.pos[0] - Math.sin(th) * 9, p.pos[1] + 5.5, p.pos[2] - Math.cos(th) * 9);
   camera.position.lerp(tmpV, Math.min(1, dt * 8));
   camera.lookAt(p.pos[0], p.pos[1] + 1.4, p.pos[2]);
+  }
 
   // HUD
   const tl = timeLeft(g), sec = Math.ceil(tl);
@@ -439,13 +441,14 @@ function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   if (keys.has('ArrowLeft')) camYaw += 120 * dt;
   if (keys.has('ArrowRight')) camYaw -= 120 * dt;
-  if (g && mode === 'play') {
+  if (g && mode === 'bench') benchFrame(now);
+  if (g && (mode === 'play' || mode === 'bench')) {
     acc += dt;
     while (acc >= 1 / 60 && g.state === 'playing') {
-      const f = readFrame();
+      const f = mode === 'bench' ? null : readFrame(); // bench: no player input
       const wasGrounded = g.player.grounded;
       step(g, f); acc -= 1 / 60;
-      if (wasGrounded && g.player.vel[1] > 0 && f.jump) sfxJump();
+      if (f && wasGrounded && g.player.vel[1] > 0 && f.jump) sfxJump();
       for (const e of drainEvents(g)) {
         SFX[e.name]?.();
         if (e.name === 'pulse') ringFx(g.player.pos, P.lampCore, T.pulse_radius);
@@ -453,7 +456,7 @@ function frame(now) {
         if (e.name === 'player_hit') { $('flash').style.opacity = 0.45; flashT = 0.15; }
       }
     }
-    if (g.state !== 'playing') finish();
+    if (g.state !== 'playing' && mode === 'play') finish();
   }
   if (flashT > 0) { flashT -= dt; if (flashT <= 0) $('flash').style.opacity = 0; }
   for (let i = fx.length - 1; i >= 0; i--) {
@@ -461,7 +464,7 @@ function frame(now) {
     f.m.scale.setScalar(1 + (f.t / f.life) * f.radius); f.m.material.opacity = Math.max(0, 0.9 - f.t / f.life);
     if (f.t > f.life) { scene.remove(f.m); fx.splice(i, 1); }
   }
-  for (const w of whales) { const a = (now / 1000) * w.sp + w.ph; w.w.position.set(35 + Math.cos(a) * w.r, -8 + Math.sin(now / 1500 + w.ph) * 1.5, Math.sin(a) * w.r); w.w.rotation.y = -a; }
+  for (const w of whales) { w.w.visible = mode !== 'bench'; /* creative extras off in bench */ const a = (now / 1000) * w.sp + w.ph; w.w.position.set(35 + Math.cos(a) * w.r, -8 + Math.sin(now / 1500 + w.ph) * 1.5, Math.sin(a) * w.r); w.w.rotation.y = -a; }
   if (g) sync(dt, now);
   else { camera.position.set(Math.sin(now / 6000) * 50, 25, Math.cos(now / 6000) * 50); camera.lookAt(0, 0, 0); }
   renderer.render(scene, camera);
@@ -471,10 +474,30 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 // ---------- start
+// ---------- Ticket-04 benchmark: ?bench&seed=42&duration=30 (driven by scripts/bench.mjs)
+let bench = null;
+function benchFrame(now) {
+  if (!bench.first) { bench.first = now; window.__benchFirstFrameEpoch = performance.timeOrigin + now; }
+  const t = (now - bench.first) / 1000, th = (2 * Math.PI * t) / 15; // 15 s per lap, CCW seen from above (same angle convention as the maps)
+  camera.position.set(30 * Math.cos(th), 15, 30 * Math.sin(th)); camera.lookAt(0, 0, 0);
+  if (bench.last !== null && t >= 3) bench.dts.push(now - bench.last); // 3 s warm-up not measured
+  bench.last = now;
+  if (t >= 3 + bench.duration && !window.__benchDone) {
+    window.__benchDone = true;
+    const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info');
+    window.__benchResult = { dts: bench.dts, gpu: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), three: THREE.REVISION, webgl2: renderer.capabilities.isWebGL2,
+      shades: g.shades.length, motes: g.motes.length, lit: g.lanterns.filter((L) => L.lit).map((L) => L.id) };
+  }
+}
 buildLevel(1);
 applyCb();
 if (qs.has('cb')) { settings.cb = true; applyCb(); }
-if (qs.has('night')) { // screenshot/benchmark helper: ?night=N[&lit=k][&t=sec][&yaw=deg] jumps straight into play
+if (qs.has('bench')) {
+  bench = { duration: Number(qs.get('duration') || 30), dts: [], first: 0, last: null };
+  g = createBenchGame(Number(qs.get('seed') || 42)); night = 1; buildLevel(1); clearViews();
+  views.lanterns = g.lanterns.map(lanternView); views.charms = [];
+  mode = 'bench'; show(null);
+} else if (qs.has('night')) { // screenshot/benchmark helper: ?night=N[&lit=k][&t=sec][&yaw=deg] jumps straight into play
   startNight(Number(qs.get('night')) || 1); beginPlay();
   const k = Number(qs.get('lit') || 0);
   g.lanterns.slice(0, k).forEach((L, i) => { L.lit = true; L.everLit = true; L.fuel = (i === 1 ? 20 : 80) * 60; }); // 2nd one low on fuel
