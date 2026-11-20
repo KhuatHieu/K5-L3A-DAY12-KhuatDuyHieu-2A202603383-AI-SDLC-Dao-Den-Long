@@ -1,0 +1,12 @@
+# Phase 1 headless evidence (2026-11-20T09:25:09Z, node v24.15.0)
+win: exit=0 | {"type":"end","ticks":61,"state":"won","score":536} | events:  1 deposit, 1 game_over, 1 lantern_lit, 5 mote_picked,
+lose_no_flames: exit=0 | {"type":"end","ticks":266,"state":"lost","score":0} | events:  1 game_over, 3 player_hit,
+lose_dawn: exit=0 | {"type":"end","ticks":120,"state":"lost","score":0} | events:  1 game_over,
+pulse: exit=0 | {"type":"end","ticks":120,"state":"playing","score":20} | events:  1 pulse,
+full_default_a: exit=0 | {"type":"end","ticks":1839,"state":"lost","score":20} | events:  1 game_over, 2 mote_picked, 3 player_hit, 1 pulse, 1 shade_spawned,
+full_default_b: exit=0 | {"type":"end","ticks":1839,"state":"lost","score":20} | events:  1 game_over, 2 mote_picked, 3 player_hit, 1 pulse, 1 shade_spawned,
+determinism (seed 42, 2 runs): IDENTICAL sha256=372712f8e9a1a887
+malformed inputs -> exit 2
+malformed scenario -> exit 2
+missing --ticks -> exit 1
+perf: default game up to 18000 ticks in 60 ms ({"type":"end","ticks":746,"state":"lost","score":0})

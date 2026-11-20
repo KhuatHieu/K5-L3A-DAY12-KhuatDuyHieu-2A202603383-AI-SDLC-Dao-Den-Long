@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đảo Đèn Lồng</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0614; font-family: system-ui, sans-serif; color: #ffe8c2; }
+  canvas { display: block; }
+  #hud { position: fixed; top: 12px; left: 12px; padding: 10px 14px; background: rgba(20,10,35,.55); border-radius: 10px; line-height: 1.6; font-size: 15px; pointer-events: none; min-width: 210px; }
+  #hud b { color: #ffc46b; }
+  #cd { height: 5px; background: #3a2550; border-radius: 3px; margin-top: 4px; }
+  #cd > div { height: 100%; background: #ffb347; border-radius: 3px; width: 100%; }
+  #hint { position: fixed; bottom: 60px; width: 100%; text-align: center; font-size: 18px; color: #ffd28a; text-shadow: 0 0 8px #000; pointer-events: none; }
+  #help { position: fixed; bottom: 12px; width: 100%; text-align: center; font-size: 13px; opacity: .7; pointer-events: none; }
+  #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(8,4,16,.72); text-align: center; }
+  #overlay h1 { font-size: 46px; margin: 0 0 8px; color: #ffc46b; text-shadow: 0 0 24px #ff9a2e; }
+  #overlay p { max-width: 560px; line-height: 1.5; }
+  #overlay .k { margin-top: 18px; font-size: 18px; color: #fff; }
+  #flash { position: fixed; inset: 0; background: #5a1e8a; opacity: 0; pointer-events: none; transition: opacity .35s; }
+</style>
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js" } }</script>
+</head>
+<body>
+<div id="hud"></div>
+<div id="hint"></div>
+<div id="help">WASD di chuyển · Chuột kéo / ← → xoay camera · Space nhảy · E nạp đèn · Q tỏa sáng · R chơi lại</div>
+<div id="flash"></div>
+<div id="overlay"></div>
+<script type="module" src="/web/main.js"></script>
+</body>
+</html>

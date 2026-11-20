@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && node --test tests/*.test.js >/dev/null 2>&1 || { echo 'Contract tests are failing — fix them before finishing (npm test).' >&2; exit 2; }"
+          }
+        ]
+      }
+    ]
+  }
+}

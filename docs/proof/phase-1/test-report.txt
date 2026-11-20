@@ -1,0 +1,32 @@
+✔ tick 0 snapshot = scenario state, end line last, snapshot cadence (62.518102ms)
+✔ default game: 5 lanterns L1..L5, motes and shades exist (50.681375ms)
+✔ movement: player_speed and camera yaw rotation (136.992588ms)
+✔ input frame applied at tick k affects state k+1; missing fields persist (42.930392ms)
+✔ pickup within pickup_radius (<= r), event tick = k+1, score per_mote (50.706469ms)
+✔ carry_capacity limits pickup (47.339725ms)
+✔ deposit + lantern_lit on interact rising edge within interact_radius (50.540356ms)
+✔ partial deposit; holding interact does not retrigger (46.818396ms)
+✔ out of interact_radius: no deposit (46.346852ms)
+✔ win: lighting last lantern -> game_over won all_lit, stops early with bonus (46.408001ms)
+✔ scenario lit:true awards no points and emits no events (50.163208ms)
+✔ shade chases at shade_speed, hits within shade_hit_radius, drops carried (57.846504ms)
+✔ invuln_s prevents repeated hits; lose at 0 flames (no_flames) (52.171737ms)
+✔ pulse: costs light, stuns + pushes shades within pulse_radius, cooldown (52.075156ms)
+✔ stun lasts pulse_stun_s (56.302718ms)
+✔ pulse without enough light does nothing (44.854793ms)
+✔ lit lantern safe_radius keeps shades out (55.358128ms)
+✔ dawn: timer runs out -> lost dawn (44.242349ms)
+✔ random shades spawn with shade_spawned events (62.964433ms)
+✔ determinism: same seed+inputs -> identical bytes; different seed differs (194.934476ms)
+✔ coordinates rounded to 3 decimals (48.552375ms)
+✔ exit codes: malformed inputs/scenario -> 2, bad args -> nonzero (319.447787ms)
+✔ contract file shape (0.3204ms)
+✔ radius boundary robust to float drift (walk exactly to interact_radius) (51.829632ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1777.906349
