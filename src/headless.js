@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Headless runner — Test Contract v1.0.
-// node src/headless.js --seed <int> --night 1 [--scenario f.json] [--inputs f.json]
+// Headless runner — Test Contract v1.1.
+// node src/headless.js --seed <int> --night 1|2|3 [--scenario f.json] [--inputs f.json]
 //                      --ticks <int> --out <file.jsonl> [--snapshot-every <int>]
 import { readFileSync, writeFileSync } from 'node:fs';
 import { configure, createGame, step, snapshot, drainEvents, ScenarioError } from './sim.js';
@@ -44,11 +44,11 @@ function validateInputs(obj) {
       fail(2, 'inputs: move must be [x, z] numbers');
     if (f.cam_yaw_deg !== undefined && !(typeof f.cam_yaw_deg === 'number' && Number.isFinite(f.cam_yaw_deg)))
       fail(2, 'inputs: cam_yaw_deg must be a number');
-    for (const b of ['jump', 'interact', 'pulse', 'dash'])
+    for (const b of ['jump', 'interact', 'pulse', 'dash', 'pause'])
       if (f[b] !== undefined && typeof f[b] !== 'boolean') fail(2, `inputs: ${b} must be boolean`);
     const frame = {};
     if (f.move) frame.move = f.move.map((x) => Math.max(-1, Math.min(1, x)));
-    for (const k of ['cam_yaw_deg', 'jump', 'interact', 'pulse', 'dash']) if (f[k] !== undefined) frame[k] = f[k];
+    for (const k of ['cam_yaw_deg', 'jump', 'interact', 'pulse', 'dash', 'pause']) if (f[k] !== undefined) frame[k] = f[k];
     byTick.set(f.tick, frame);
   }
   return byTick;
@@ -57,7 +57,7 @@ function validateInputs(obj) {
 const args = parseArgs(process.argv.slice(2));
 const seed = intArg(args, 'seed', 0);
 const night = intArg(args, 'night', 1);
-if (night !== 1) fail(1, `night ${night} not available (only night 1)`);
+if (![1, 2, 3].includes(night)) fail(1, `--night must be 1, 2 or 3 (got ${night})`);
 const ticks = intArg(args, 'ticks');
 if (ticks < 0) fail(1, '--ticks must be >= 0');
 const every = intArg(args, 'snapshot-every', 10);
@@ -71,17 +71,17 @@ const scenario = args.scenario ? readJson(args.scenario, 'scenario') : null;
 const inputs = args.inputs ? validateInputs(readJson(args.inputs, 'inputs')) : new Map();
 
 let g;
-try { g = createGame({ seed, scenario }); } catch (e) {
+try { g = createGame({ seed, night, scenario }); } catch (e) {
   if (e instanceof ScenarioError) fail(2, `scenario: ${e.message}`);
   throw e;
 }
 
-const lines = [JSON.stringify(snapshot(g))];
-let k = 0;
-for (; k < ticks && g.state === 'playing'; k++) {
+const lines = [JSON.stringify(snapshot(g)), JSON.stringify({ type: 'event', tick: 0, name: 'night_start', data: { night } })];
+const live = () => g.state === 'playing' || g.state === 'paused';
+for (let k = 0; k < ticks && live(); k++) {
   step(g, inputs.get(k) || null);
   for (const e of drainEvents(g)) lines.push(JSON.stringify(e));
-  if (g.steps % every === 0) lines.push(JSON.stringify(snapshot(g)));
+  if (g.tick % every === 0) lines.push(JSON.stringify(snapshot(g)));
 }
-lines.push(JSON.stringify({ type: 'end', ticks: g.steps, state: g.state, score: g.score }));
+lines.push(JSON.stringify({ type: 'end', ticks: g.tick, state: g.state, score: g.score }));
 try { writeFileSync(args.out, lines.join('\n') + '\n'); } catch (e) { fail(1, `cannot write ${args.out}: ${e.message}`); }
