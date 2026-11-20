@@ -44,3 +44,19 @@ Ticket-02 **thay** số liệu và một số luật Phase 1. Những giả đ�
 | B14 | Tạm dừng ở bản chơi | Không gọi `step()` khi menu tạm dừng mở (logic dừng hẳn); headless dùng input `pause` theo contract |
 | B15 | Vách tầng | Không bước lên được nếu mặt đất mới cao hơn chân > 0.35 m; dốc (0.5 m/m) đi lên được |
 | B16 | Gió Lạc đã bị Tỏa Sáng khi đang chase | Coi như đã dùng lượt cướp (không quay lại cướp nữa) |
+
+# Giả định — Phase 3 (Ticket-03)
+
+Bị thay: B9 (đèn vừa thắp → giờ áp dụng cả khi châm dầu lên ≥ 30), luật thắng và điểm của Phase 1–2 (xem `CHANGELOG.md`, ADR 0001).
+
+| # | Chỗ mơ hồ | Giả định |
+|---|---|---|
+| C1 | Tốc độ Bóng `wander` đi tới đèn yếu | `shade_speed` (4 / 4.5 m/s), vì có mục tiêu; đi lang thang hay về đèn tắt vẫn 1 m/s |
+| C2 | "Đi về đèn tắt gần nhất như trước" | `wander` không có đèn yếu thì trôi về đèn tắt gần nhất, dừng ở 6 m; không còn đèn tắt thì trôi ngẫu nhiên |
+| C3 | Bóng `drain` có gây sát thương không | Không; chỉ `wander`/`chase` gây sát thương |
+| C4 | `target_lantern_id` trong scenario | Ưu tiên đèn này khi nó yếu; không yếu thì chọn đèn yếu gần nhất |
+| C5 | `fuel_drain.fuel` | Giá trị fuel sau khi trừ ở tick đó, 1 chữ số thập phân |
+| C6 | Tỏa Sáng trúng Bóng `drain` | Cộng 15 thay vì 5 (tổng 15, đúng "tổng +15") |
+| C7 | Scenario `lit: true` mà không có `ever_lit` | `ever_lit = true` (đèn đang sáng thì đã từng sáng) |
+| C8 | Châm dầu đèn vừa thắp (fuel 99.98) | Hợp lệ, tốn 1 đom đóm — đúng công thức `ceil((100 − fuel)/10)` |
+| C9 | Đẩy Bóng khi châm dầu ≥ 30 | Áp dụng cho mọi Bóng trong 6 m ở tick đó (kể cả đang drain → chuyển wander), như khi thắp |

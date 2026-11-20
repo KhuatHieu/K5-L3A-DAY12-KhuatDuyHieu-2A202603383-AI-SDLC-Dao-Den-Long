@@ -1,0 +1,17 @@
+# Phase 3 headless evidence (2026-11-20T10:01:06Z, node v24.15.0)
+drain_chase (night 1): exit=0 74ms | {"type":"end","ticks":760,"state":"playing","score":0} | events:  3 fuel_drain, 1 night_start, 1 player_hit,
+out_relight (night 1): exit=0 60ms | {"type":"end","ticks":160,"state":"playing","score":65} | events:  1 deposit, 1 lantern_lit, 1 lantern_out, 1 night_start,
+dawn_win (night 1): exit=0 72ms | {"type":"end","ticks":600,"state":"won","score":450} | events:  1 game_over, 1 night_start,
+dawn_lose (night 1): exit=0 70ms | {"type":"end","ticks":600,"state":"lost","score":0} | events:  1 game_over, 1 lantern_out, 1 night_start,
+full_n1_a (night 1): exit=0 593ms | {"type":"end","ticks":14400,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 6 shade_spawned,
+full_n1_b (night 1): exit=0 582ms | {"type":"end","ticks":14400,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 6 shade_spawned,
+determinism night 1 (seed 42): IDENTICAL
+full_n2_a (night 2): exit=0 954ms | {"type":"end","ticks":16200,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 8 shade_spawned,
+full_n2_b (night 2): exit=0 940ms | {"type":"end","ticks":16200,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 8 shade_spawned,
+determinism night 2 (seed 42): IDENTICAL
+full_n3_a (night 3): exit=0 1277ms | {"type":"end","ticks":18000,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 10 shade_spawned,
+full_n3_b (night 3): exit=0 1235ms | {"type":"end","ticks":18000,"state":"lost","score":0} | events:  1 game_over, 1 night_start, 10 shade_spawned,
+determinism night 3 (seed 42): IDENTICAL
+malformed inputs -> exit 2
+malformed scenario -> exit 2
+--night 4 -> exit 1

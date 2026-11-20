@@ -31,3 +31,16 @@
   4. Đo FPS headless mặc định dùng SwiftShader (CPU, ~11 FPS), không đại diện cho máy thật. Bật GL (`--use-angle=gl`) để đo trên iGPU Intel Arc thật.
 - Token ước tính Phase 2: ~250k vào / ~60k ra (phần lớn là viết lại sim, test và renderer).
 - Tiết kiệm: ticket được chép một lần vào repo; test chạy CLI thật nên đọc kết quả qua grep; tự dựng CDP bằng WebSocket có sẵn của Node thay vì cài puppeteer.
+
+## Phase 3 (30 phút)
+- Ticket-03 do người dùng dán, AI chép vào `docs/lab/phase-3-ticket-03.md`.
+- Quyết định chính (ADR 0001): dầu là số nguyên theo đơn vị 1/60 ngay từ đầu, rút kinh nghiệm từ lỗi float ở Phase 1.
+- Test cũ bị luật mới làm sai, đã **cập nhật kèm comment `[Ticket-03]`** (không skip):
+  1. `contract file` → v1.2, thời lượng mới, bảng điểm mới;
+  2. `deposit…` → +5/đom đóm, `lantern_lit.relight`;
+  3. `nearest… tie` → đèn sáng giờ cũng chọn được (để châm dầu), nên dời L3 ra xa;
+  4. `win all_lit…` → **thay** bằng `lighting all lanterns does not end the night…` vì `all_lit` đã bị bỏ.
+- Thêm 13 test Phase 3, tổng 51/51 đạt.
+- Lỗi phát hiện nhờ kiểm chứng: 3 test mới do AI viết sai. Hai test quên `every: 1` nên đọc snapshot không tồn tại. Một test kỳ vọng lần nhấn E thứ hai nạp vào L2, nhưng đúng luật thì L1 vừa thắp đã hao xuống dưới 100 nên vẫn chọn được và gần hơn. Đã sửa test, luật giữ nguyên, và ghi thành giả định C8.
+- Kịch bản `drain_refuel` không ra kết quả như dự tính: Bóng chuyển sang chase rồi đánh trúng Mây trước khi kịp châm dầu. Đổi tên thành `drain_chase` để đúng với điều nó chứng minh, thay vì sửa input cho "đẹp".
+- Token ước tính Phase 3: ~120k vào / ~35k ra.

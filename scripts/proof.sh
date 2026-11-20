@@ -21,6 +21,15 @@ for n in 1 2 3; do run full_n${n}_a $n 42 21600; run full_n${n}_b $n 42 21600
   cmp -s "$O/full_n${n}_a.jsonl" "$O/full_n${n}_b.jsonl" && echo "determinism night $n (seed 42): IDENTICAL" || echo "determinism night $n: DIFFERENT (FAIL)"
   rm -f "$O/full_n${n}_b.jsonl"; gzip -f "$O/full_n${n}_a.jsonl"; done
 fi
+if [ "$PH" = 3 ]; then
+run drain_chase 1 1 760 $S/drain_chase.scenario.json $S/drain_chase.inputs.json
+run out_relight 1 1 160 $S/out_relight.scenario.json $S/out_relight.inputs.json
+run dawn_win 1 1 1000 $S/dawn_win.scenario.json
+run dawn_lose 1 1 1000 $S/dawn_lose.scenario.json
+for n in 1 2 3; do run full_n${n}_a $n 42 18000; run full_n${n}_b $n 42 18000
+  cmp -s "$O/full_n${n}_a.jsonl" "$O/full_n${n}_b.jsonl" && echo "determinism night $n (seed 42): IDENTICAL" || echo "determinism night $n: DIFFERENT (FAIL)"
+  rm -f "$O/full_n${n}_b.jsonl"; gzip -f "$O/full_n${n}_a.jsonl"; done
+fi
 echo '{bad' > "$O/bad.json"; $H --seed 1 --night 1 --ticks 10 --out "$O/x.jsonl" --inputs "$O/bad.json" 2>/dev/null; echo "malformed inputs -> exit $?"
 $H --seed 1 --night 2 --ticks 10 --out "$O/x.jsonl" --scenario "$O/bad.json" 2>/dev/null; echo "malformed scenario -> exit $?"
 $H --seed 1 --night 4 --ticks 10 --out "$O/x.jsonl" 2>/dev/null; echo "--night 4 -> exit $?"

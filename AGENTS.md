@@ -1,6 +1,6 @@
 # AGENTS.md — Đảo Đèn Lồng
 
-3D game (Three.js, browser) + headless CLI (Node ≥ 18) for the AI SDLC lab. Requirements per phase: `docs/lab/` (PRD-0, Ticket-02…). Current contract: **v1.1** (3 nights).
+3D game (Three.js, browser) + headless CLI (Node ≥ 18) for the AI SDLC lab. Requirements per phase: `docs/lab/` (PRD-0, Ticket-02…). Current contract: **v1.2** (3 nights, lantern fuel, dawn win — see `docs/adr/0001-*`).
 
 ## Commands
 - install: `npm install` · play: `npm start` → http://localhost:5173 (`?night=N` jumps into a night)
@@ -14,6 +14,8 @@
 - Contract numbers live in `game.contract.json` `tuning` (read via `configure()`); never duplicate them.
 
 ## Rules
+- Lantern fuel is an integer in 1/60 units (`FU`); round only in `snapshot()`.
+- Breaking rule changes ⇒ `CHANGELOG.md` entry + ADR in `docs/adr/` + update the affected tests with a `[Ticket-NN]` comment (never skip).
 - Timers are integer tick counters, decremented at step start (step 2). Radius checks use `within(d, r)` (≤ r + 1e-6).
 - Events are stamped `tick = k+1` for step k. Output coordinates rounded to 3 decimals only at snapshot time.
 - Malformed scenario/inputs → exit 2. Other errors → exit 1 + stderr.
